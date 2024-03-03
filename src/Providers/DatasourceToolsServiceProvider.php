@@ -52,9 +52,10 @@ class DatasourceToolsServiceProvider extends ServiceProvider
             /**
              * Splits a table into partitions by dates across a range of dates
              *
-             * @param string $partitionColumnName The name of the column to partition against
+             * @param string $tableName The table to be partitioned
              * @param Carbon $startDate The starting partition date in the format of {@see Constants::MYSQL_DATE_FORMAT}, typically, in the past.
              * @param Carbon $endDate The concluding partition date in the format of {@see Constants::MYSQL_DATE_FORMAT}, typically, in the future.
+             * @param string $partitionColumnName The name of the indexed column to partition against
              */
             function (string $tableName, Carbon $startDate, Carbon $endDate, string $partitionColumnName = 'created_at_indexed') {
                 /**
