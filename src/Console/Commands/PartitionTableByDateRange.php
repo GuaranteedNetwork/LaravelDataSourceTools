@@ -45,9 +45,9 @@ use InvalidArgumentException;
  *   `response_code` int NOT NULL,
  *   `response_body` json DEFAULT NULL,
  *   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
- *   `created_at_indexed` date NOT NULL DEFAULT (curdate()),
+ *   `date_partition_column` date NOT NULL DEFAULT (curdate()),
  *   PRIMARY KEY (`id`,`created_date`),
- *   KEY `wms_requests_created_at_indexed_index` (`created_at_indexed`)
+ *   KEY `wms_requests_date_partition_column_index` (`date_partition_column`)
  * ) ENGINE=InnoDB AUTO_INCREMENT=93327 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
  * /*!50100 PARTITION BY RANGE (to_days(`created_date`))
  * (PARTITION p20230925 VALUES LESS THAN (739154) ENGINE = InnoDB,
@@ -70,7 +70,7 @@ class PartitionTableByDateRange extends Command
                             {tableName : The name of the table to partition}
                             {startDate : The starting partition date in the format of ' . Constants::MYSQL_DATE_FORMAT . ', typically, in the past.}
                             {endDate : The concluding partition date in the format of ' . Constants::MYSQL_DATE_FORMAT . ', typically, in the future.}
-                            {--partitionColumnName=created_at_indexed : The name of the column to partition against}
+                            {--partitionColumnName=date_partition_column : The name of the column to partition against}
                             {--blueprint= : A special option used internally when this command is invoked programmatically via migrations.  It should not be used via the CLI.}
                             {--databaseManagerStatements=  : A special option used internally when this command is invoked programmatically via migrations.  It should not be used via the CLI.}';
 

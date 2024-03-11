@@ -45,7 +45,7 @@ class DatasourceToolsServiceProvider extends ServiceProvider
         }
 
         ///////////////////////////////////////////////
-        // Bootstrap Blueprint migration extension
+        // Bootstrap DB migration extensions
         ///////////////////////////////////////////////
         DB::macro(
             'partitionByDateRange',
@@ -57,7 +57,7 @@ class DatasourceToolsServiceProvider extends ServiceProvider
              * @param Carbon $endDate The concluding partition date in the format of {@see Constants::MYSQL_DATE_FORMAT}, typically, in the future.
              * @param string $partitionColumnName The name of the indexed column to partition against
              */
-            function (string $tableName, Carbon $startDate, Carbon $endDate, string $partitionColumnName = 'created_at_indexed') {
+            function (string $tableName, Carbon $startDate, Carbon $endDate, string $partitionColumnName = 'date_partition_column') {
                 /**
                  * @var DatabaseManager $this is the DatabaseManager rebound by \Illuminate\Support\Traits\Macroable::__call
                  */
@@ -66,11 +66,11 @@ class DatasourceToolsServiceProvider extends ServiceProvider
 
                 Schema::table(
                     $tableName,
-                    function (Blueprint $table) use (&$dbManagerStatements, $tableName, $startDate, $endDate, $partitionColumnName) {
+                    function (Blueprint $table) use (&$dbManagerStatements, $startDate, $endDate, $partitionColumnName) {
                         Artisan::call(
                             PartitionTableByDateRange::class,
                             [
-                                'tableName' => $tableName,
+                                'tableName' => $table->getTable(),
                                 'startDate' => $startDate,
                                 'endDate' => $endDate,
                                 '--partitionColumnName' => $partitionColumnName,
@@ -84,6 +84,35 @@ class DatasourceToolsServiceProvider extends ServiceProvider
                 foreach ($dbManagerStatements as $statement) {
                     DB::statement($statement);
                 }
+            }
+        );
+
+        DB::macro(
+            'removeDateRangePartition',
+            /**
+             * Removes partitions on a table partitioned by "DB::partitionByDateRange"
+             *
+             * @param string $tableName The table where the partition will be removed
+             * @param string $partitionColumnName The name of the indexed column that is partition against
+             */
+            function (string $tableName, string $partitionColumnName = 'date_partition_column') {
+                /**
+                 * @var DatabaseManager $this is the DatabaseManager rebound by \Illuminate\Support\Traits\Macroable::__call
+                 */
+
+                DB::statement("ALTER TABLE $tableName REMOVE PARTITIONING;");
+
+                Schema::table(
+                    $tableName,
+                    function (Blueprint $table) use ($partitionColumnName) {
+                        $table->dropPrimary(['id', $partitionColumnName]);
+                        $table->primary(['id']);
+                        $table->dropUnique(['id']);
+
+                        $table->dropIndex([$partitionColumnName]);
+                        $table->dropColumn([$partitionColumnName]);
+                    }
+                );
             }
         );
     }
